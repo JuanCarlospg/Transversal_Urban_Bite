@@ -12,12 +12,10 @@ if (!$id_mesa || !$id_sala) {
 
 // Eliminar la mesa de la base de datos
 $query = "DELETE FROM tbl_mesas WHERE id_mesa = ?";
-$stmt = mysqli_prepare($conexion, $query);
-mysqli_stmt_bind_param($stmt, "i", $id_mesa);
-mysqli_stmt_execute($stmt);
-mysqli_stmt_close($stmt);
+$stmt = $conexion->prepare($query);
+$stmt->execute([$id_mesa]);
 
 // Redirigir a la página anterior con un mensaje de éxito
 header("Location: añadir_mesa.php?id_sala=" . $id_sala . "&mensaje=mesa_eliminada");
 exit();
-?> 
+?>

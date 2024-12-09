@@ -11,12 +11,9 @@ if (!$id_mesa) {
 
 // Consultar la mesa para mostrar los datos actuales
 $query = "SELECT * FROM tbl_mesas WHERE id_mesa = ?";
-$stmt = mysqli_prepare($conexion, $query);
-mysqli_stmt_bind_param($stmt, "i", $id_mesa);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$mesa = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$stmt = $conexion->prepare($query);
+$stmt->execute([$id_mesa]);
+$mesa = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$mesa) {
     die("Mesa no encontrada.");
@@ -30,10 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Actualizar la mesa en la base de datos
     $query = "UPDATE tbl_mesas SET numero_mesa = ?, numero_sillas = ?, estado = ? WHERE id_mesa = ?";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, "iiis", $numero_mesa, $numero_sillas, $estado, $id_mesa);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conexion->prepare($query);
+    $stmt->execute([$numero_mesa, $numero_sillas, $estado, $id_mesa]);
 
     header("Location: añadir_mesa.php?tipo=mesas&id_sala=" . $mesa['id_sala'] . "&mensaje=mesa_actualizada");
     exit();
@@ -76,11 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" class="form-crear-sala border p-4 bg-light">
             <div class="form-group">
                 <label>Número de Mesa:</label>
-                <input type="number" name="numero_mesa" value="<?php echo $mesa['numero_mesa']; ?>" required class="form-control">
+                <input type="number" name="numero_mesa" value="<?php echo htmlspecialchars($mesa['numero_mesa']); ?>" required class="form-control">
             </div>
             <div class="form-group">
                 <label>Número de Sillas:</label>
-                <input type="number" name="numero_sillas" value="<?php echo $mesa['numero_sillas']; ?>" required class="form-control">
+                <input type="number" name="numero_sillas" value="<?php echo htmlspecialchars($mesa['numero_sillas']); ?>" required class="form-control">
             </div>
             <div class="form-group">
                 <label>Estado:</label>

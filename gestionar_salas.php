@@ -46,15 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear'])) {
     $valores = array_map(fn($campo) => $_POST[$campo], array_slice($campos, 1)); // Excluir ID al insertar
     $placeholders = implode(', ', array_fill(0, count($valores), '?'));
     $query = "INSERT INTO $tabla (" . implode(', ', array_slice($campos, 1)) . ") VALUES ($placeholders)";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, str_repeat('s', count($valores)), ...$valores);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conexion->prepare($query);
+    $stmt->execute($valores);
 }
 
 // Leer datos
 $query = "SELECT * FROM $tabla";
-$result = mysqli_query($conexion, $query);
+$result = $conexion->query($query);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -103,7 +101,7 @@ $result = mysqli_query($conexion, $query);
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                <?php while ($row = $result->fetch(PDO::FETCH_ASSOC)): ?>
                     <tr>
                         <?php foreach ($campos as $campo): ?>
                             <td><?php echo $row[$campo]; ?></td>

@@ -1,4 +1,3 @@
-// eliminar.php
 <?php
 session_start();
 require_once('./php/conexion.php');
@@ -25,10 +24,8 @@ if (!$id) {
 
 // Eliminar recurso
 $query = "DELETE FROM $tabla WHERE $id_campo = ?";
-$stmt = mysqli_prepare($conexion, $query);
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
-mysqli_stmt_close($stmt);
+$stmt = $conexion->prepare($query);
+$stmt->execute([$id]);
 
 header("Location: gestionar.php?tipo=$tipo");
 exit();

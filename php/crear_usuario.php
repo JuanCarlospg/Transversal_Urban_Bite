@@ -2,17 +2,14 @@
 session_start();
 require_once('./conexion.php');
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre_user = $_POST['nombre_user'];
     $contrasena = password_hash($_POST['contrasena'], PASSWORD_BCRYPT);
     $id_rol = $_POST['id_rol'];
 
     $query = "INSERT INTO tbl_usuarios (nombre_user, contrasena, id_rol) VALUES (?, ?, ?)";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, "ssi", $nombre_user, $contrasena, $id_rol);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conexion->prepare($query);
+    $stmt->execute([$nombre_user, $contrasena, $id_rol]);
 
     header("Location: ../gestionar_usuarios.php");
     exit();
@@ -20,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Obtener roles para el formulario
 $query_roles = "SELECT * FROM tbl_roles";
-$result_roles = mysqli_query($conexion, $query_roles);
+$stmt_roles = $conexion->query($query_roles);
+$roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -70,13 +68,13 @@ $result_roles = mysqli_query($conexion, $query_roles);
             <div class="form-group">
                 <label for="id_rol">Rol:</label>
                 <select name="id_rol" class="form-control">
-                    <?php while ($rol = mysqli_fetch_assoc($result_roles)): ?>
-                        <option value="<?php echo $rol['id_rol']; ?>"><?php echo $rol['nombre_rol']; ?></option>
-                    <?php endwhile; ?>
+                    <?php foreach ($roles as $rol): ?>
+                        <option value="<?php echo htmlspecialchars($rol['id_rol']); ?>"><?php echo htmlspecialchars($rol['nombre_rol']); ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Crear</button>
         </form>
     </div>
 </body>
-</html> 
+</html>

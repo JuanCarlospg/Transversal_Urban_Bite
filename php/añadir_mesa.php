@@ -11,12 +11,9 @@ if (!$id_sala) {
 
 // Consultar la sala para mostrar el nombre
 $query = "SELECT nombre_sala FROM tbl_salas WHERE id_sala = ?";
-$stmt = mysqli_prepare($conexion, $query);
-mysqli_stmt_bind_param($stmt, "i", $id_sala);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$sala = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$stmt = $conexion->prepare($query);
+$stmt->execute([$id_sala]);
+$sala = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$sala) {
     die("Sala no encontrada.");
@@ -24,11 +21,9 @@ if (!$sala) {
 
 // Consultar mesas existentes en la sala
 $query_mesas = "SELECT * FROM tbl_mesas WHERE id_sala = ?";
-$stmt_mesas = mysqli_prepare($conexion, $query_mesas);
-mysqli_stmt_bind_param($stmt_mesas, "i", $id_sala);
-mysqli_stmt_execute($stmt_mesas);
-$result_mesas = mysqli_stmt_get_result($stmt_mesas);
-mysqli_stmt_close($stmt_mesas);
+$stmt_mesas = $conexion->prepare($query_mesas);
+$stmt_mesas->execute([$id_sala]);
+$result_mesas = $stmt_mesas->fetchAll(PDO::FETCH_ASSOC);
 
 // Procesar el formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -38,10 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Insertar nueva mesa
     $query = "INSERT INTO tbl_mesas (numero_mesa, id_sala, numero_sillas, estado) VALUES (?, ?, ?, ?)";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, "iiis", $numero_mesa, $id_sala, $numero_sillas, $estado);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conexion->prepare($query);
+    $stmt->execute([$numero_mesa, $id_sala, $numero_sillas, $estado]);
 
     header("Location: añadir_mesa.php?id_sala=$id_sala");
     exit();
@@ -105,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <h2 class="mb-4">Lista de mesas de "<?php echo $sala['nombre_sala']; ?>"</h2>
         
-        <?php if ($result_mesas && mysqli_num_rows($result_mesas) > 0): ?>
+        <?php if ($result_mesas && count($result_mesas) > 0): ?>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -117,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($mesa = mysqli_fetch_assoc($result_mesas)): ?>
+                    <?php foreach ($result_mesas as $mesa): ?>
                         <tr>
                             <td><?php echo $mesa['id_mesa']; ?></td>
                             <td><?php echo $mesa['numero_mesa']; ?></td>
@@ -128,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <a href="eliminar_mesa.php?id=<?php echo $mesa['id_mesa']; ?>&id_sala=<?php echo $id_sala; ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta mesa?');">Eliminar</a>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>

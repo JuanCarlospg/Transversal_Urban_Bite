@@ -36,12 +36,9 @@ if (!$id) {
 
 // Obtener datos del recurso
 $query = "SELECT * FROM $tabla WHERE $id_campo = ?";
-$stmt = mysqli_prepare($conexion, $query);
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$recurso = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$stmt = $conexion->prepare($query);
+$stmt->execute([$id]);
+$recurso = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$recurso) {
     die("Recurso no encontrado.");
@@ -50,21 +47,15 @@ if (!$recurso) {
 // Procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valores = [];
-    $tipos = '';
-
     foreach ($campos as $campo) {
         $valores[] = $_POST[$campo];
-        $tipos .= 's'; // Asignamos el tipo de dato como string ('s') por defecto
     }
     $valores[] = $id;
-    $tipos .= 'i'; // El ID es de tipo entero
 
     $set = implode(', ', array_map(fn($campo) => "$campo = ?", $campos));
     $query = "UPDATE $tabla SET $set WHERE $id_campo = ?";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conexion->prepare($query);
+    $stmt->execute($valores);
 
     header("Location: ../gestionar_salas.php?tipo=$tipo");
     exit();
@@ -72,11 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Obtener los tipos de sala existentes en la base de datos
 $queryTipos = "SELECT DISTINCT tipo_sala FROM tbl_salas";
-$resultTipos = mysqli_query($conexion, $queryTipos);
-$tiposSala = [];
-while ($row = mysqli_fetch_assoc($resultTipos)) {
-    $tiposSala[] = $row['tipo_sala'];
-}
+$stmtTipos = $conexion->query($queryTipos);
+$tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -129,7 +117,7 @@ while ($row = mysqli_fetch_assoc($resultTipos)) {
                 <select id="tipo_sala" name="tipo_sala" required class="form-control">
                     <option value="" disabled>Seleccione un tipo</option>
                     <?php foreach ($tiposSala as $tipoSala): ?>
-                        <option value="<?php echo $tipoSala; ?>" <?php echo ($tipoSala === $recurso['tipo_sala']) ? 'selected' : ''; ?>><?php echo ucfirst($tipoSala); ?></option>
+                        <option value="<?php echo htmlspecialchars($tipoSala); ?>" <?php echo ($tipoSala === $recurso['tipo_sala']) ? 'selected' : ''; ?>><?php echo ucfirst(htmlspecialchars($tipoSala)); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

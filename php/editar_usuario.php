@@ -4,12 +4,9 @@ require_once('./conexion.php');
 
 $id_usuario = $_GET['id'];
 $query_usuario = "SELECT * FROM tbl_usuarios WHERE id_usuario = ?";
-$stmt_usuario = mysqli_prepare($conexion, $query_usuario);
-mysqli_stmt_bind_param($stmt_usuario, "i", $id_usuario);
-mysqli_stmt_execute($stmt_usuario);
-$result_usuario = mysqli_stmt_get_result($stmt_usuario);
-$usuario = mysqli_fetch_assoc($result_usuario);
-mysqli_stmt_close($stmt_usuario);
+$stmt_usuario = $conexion->prepare($query_usuario);
+$stmt_usuario->execute([$id_usuario]);
+$usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre_user = $_POST['nombre_user'];
@@ -19,27 +16,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($contrasena)) {
         $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
         $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ?, contrasena = ? WHERE id_usuario = ?";
-        $stmt = mysqli_prepare($conexion, $query);
-        mysqli_stmt_bind_param($stmt, "sisi", $nombre_user, $id_rol, $contrasena_hash, $id_usuario);
+        $stmt = $conexion->prepare($query);
+        $stmt->execute([$nombre_user, $id_rol, $contrasena_hash, $id_usuario]);
     } else {
         $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ? WHERE id_usuario = ?";
-        $stmt = mysqli_prepare($conexion, $query);
-        mysqli_stmt_bind_param($stmt, "sii", $nombre_user, $id_rol, $id_usuario);
+        $stmt = $conexion->prepare($query);
+        $stmt->execute([$nombre_user, $id_rol, $id_usuario]);
     }
 
-    if (mysqli_stmt_execute($stmt)) {
+    if ($stmt->rowCount()) {
         header("Location: ../gestionar_usuarios.php");
         exit();
     } else {
-        echo "Error al actualizar el usuario: " . mysqli_error($conexion);
+        echo "Error al actualizar el usuario.";
     }
-
-    mysqli_stmt_close($stmt);
 }
 
 // Obtener roles para el formulario
 $query_roles = "SELECT * FROM tbl_roles";
-$result_roles = mysqli_query($conexion, $query_roles);
+$stmt_roles = $conexion->query($query_roles);
+$roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -80,7 +76,7 @@ $result_roles = mysqli_query($conexion, $query_roles);
         <form method="POST" class="form-crear-usuario border p-4">
             <div class="form-group">
                 <label for="nombre_user">Nombre de Usuario:</label>
-                <input type="text" name="nombre_user" value="<?php echo $usuario['nombre_user']; ?>" required class="form-control">
+                <input type="text" name="nombre_user" value="<?php echo htmlspecialchars($usuario['nombre_user']); ?>" required class="form-control">
             </div>
             <div class="form-group">
                 <label for="contrasena">Nueva Contraseña (opcional):</label>
@@ -89,13 +85,13 @@ $result_roles = mysqli_query($conexion, $query_roles);
             <div class="form-group">
                 <label for="id_rol">Rol:</label>
                 <select name="id_rol" class="form-control">
-                    <?php while ($rol = mysqli_fetch_assoc($result_roles)): ?>
-                        <option value="<?php echo $rol['id_rol']; ?>" <?php echo $rol['id_rol'] == $usuario['id_rol'] ? 'selected' : ''; ?>><?php echo $rol['nombre_rol']; ?></option>
-                    <?php endwhile; ?>
+                    <?php foreach ($roles as $rol): ?>
+                        <option value="<?php echo htmlspecialchars($rol['id_rol']); ?>" <?php echo $rol['id_rol'] == $usuario['id_rol'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($rol['nombre_rol']); ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Actualizar</button>
         </form>
     </div>
 </body>
-</html> 
+</html>

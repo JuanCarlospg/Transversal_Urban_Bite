@@ -10,11 +10,8 @@ if (!isset($_SESSION['usuario']) || $_SESSION['rol'] != 'Administrador') {
 
 // Obtener los tipos de sala existentes en la base de datos
 $queryTipos = "SELECT DISTINCT tipo_sala FROM tbl_salas";
-$resultTipos = mysqli_query($conexion, $queryTipos);
-$tiposSala = [];
-while ($row = mysqli_fetch_assoc($resultTipos)) {
-    $tiposSala[] = $row['tipo_sala'];
-}
+$stmtTipos = $conexion->query($queryTipos);
+$tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
 
 // Procesar creación de sala
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,16 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tipoSala = $_POST['tipo_sala'];
 
     $query = "INSERT INTO tbl_salas (nombre_sala, capacidad, tipo_sala) VALUES (?, ?, ?)";
-    $stmt = mysqli_prepare($conexion, $query);
-    mysqli_stmt_bind_param($stmt, 'sis', $nombreSala, $capacidad, $tipoSala);
+    $stmt = $conexion->prepare($query);
     
-    if (mysqli_stmt_execute($stmt)) {
+    if ($stmt->execute([$nombreSala, $capacidad, $tipoSala])) {
         header("Location: ../gestionar_salas.php?tipo=salas&mensaje=creado");
         exit();
     } else {
         $error = "Error al crear la sala.";
     }
-    mysqli_stmt_close($stmt);
 }
 ?>
 
@@ -87,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select id="tipo_sala" name="tipo_sala" required class="form-control">
                     <option value="" disabled selected>Seleccione un tipo</option>
                     <?php foreach ($tiposSala as $tipo): ?>
-                        <option value="<?php echo $tipo; ?>"><?php echo ucfirst($tipo); ?></option>
+                        <option value="<?php echo htmlspecialchars($tipo); ?>"><?php echo ucfirst(htmlspecialchars($tipo)); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
