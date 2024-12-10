@@ -108,7 +108,7 @@ $result = $conexion->query($query);
                         <?php endforeach; ?>
                         <td>
                             <a href="./php/editar_sala.php?tipo=<?php echo $tipo; ?>&id=<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="./php/eliminar.php?tipo=<?php echo $tipo; ?>&id=<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>" class="btn btn-danger btn-sm">Eliminar</a>
+                            <a href="./php/eliminar_sala.php?tipo=<?php echo $tipo; ?>&id=<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>" class="btn btn-danger btn-sm">Eliminar</a>
                             <?php if ($tipo === 'salas'): ?>
                                 <a href="./php/añadir_mesa.php?id_sala=<?php echo $row['id_sala']; ?>" class="btn btn-success btn-sm">Añadir Mesas</a>
                             <?php endif; ?>

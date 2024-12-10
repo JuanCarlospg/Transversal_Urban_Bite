@@ -50,13 +50,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($campos as $campo) {
         $valores[] = $_POST[$campo];
     }
-    $valores[] = $id;
-
+    
+    // Manejo de la imagen
+    if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
+        $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
+        move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala);
+        $valores[] = $imagenSala; // Agregar la nueva imagen a los valores
+    } else {
+        $valores[] = $recurso['imagen_sala']; // Mantener la imagen existente
+    }
+    
+    // Asegúrate de que el número de campos y valores coincidan
     $set = implode(', ', array_map(fn($campo) => "$campo = ?", $campos));
-    $query = "UPDATE $tabla SET $set WHERE $id_campo = ?";
+    $query = "UPDATE $tabla SET $set, imagen_sala = ? WHERE $id_campo = ?";
+    $valores[] = $id; // Agregar el ID al final de los valores
     $stmt = $conexion->prepare($query);
     $stmt->execute($valores);
-
+    
     header("Location: ../gestionar_salas.php?tipo=$tipo");
     exit();
 }
@@ -101,7 +111,7 @@ $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
 
     <div class="container container-crud">
         <h2 class="mb-4">Editar <?php echo ucfirst(substr($tipo, 0, -1)); ?></h2>
-        <form method="POST" class="form-crear-sala border p-4 bg-light">
+        <form method="POST" class="form-crear-sala border p-4 bg-light" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="nombre_sala">Nombre de la Sala:</label>
                 <input type="text" id="nombre_sala" name="nombre_sala" value="<?php echo htmlspecialchars($recurso['nombre_sala']); ?>" required class="form-control">
@@ -120,6 +130,11 @@ $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
                         <option value="<?php echo htmlspecialchars($tipoSala); ?>" <?php echo ($tipoSala === $recurso['tipo_sala']) ? 'selected' : ''; ?>><?php echo ucfirst(htmlspecialchars($tipoSala)); ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label for="imagen_sala">Imagen de la Sala:</label>
+                <input type="file" id="imagen_sala" name="imagen_sala" accept="image/*" class="form-control">
             </div>
 
             <button type="submit" class="btn btn-primary">Actualizar Sala</button>

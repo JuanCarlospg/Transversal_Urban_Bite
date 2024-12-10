@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once('./php/conexion.php');
+require_once('./conexion.php');
 
 // Obtener tipo de recurso y verificar su validez
 $tipo = $_GET['tipo'] ?? 'salas';
@@ -27,6 +27,6 @@ $query = "DELETE FROM $tabla WHERE $id_campo = ?";
 $stmt = $conexion->prepare($query);
 $stmt->execute([$id]);
 
-header("Location: gestionar.php?tipo=$tipo");
+header("Location: ../gestionar_salas.php?tipo=$tipo");
 exit();
 ?>

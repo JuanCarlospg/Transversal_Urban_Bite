@@ -18,11 +18,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombreSala = $_POST['nombre_sala'];
     $capacidad = $_POST['capacidad'];
     $tipoSala = $_POST['tipo_sala'];
+    
+    // Manejo de la imagen
+    $imagenSala = null;
+    if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
+        $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
+        move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala);
+    }
 
-    $query = "INSERT INTO tbl_salas (nombre_sala, capacidad, tipo_sala) VALUES (?, ?, ?)";
+    $query = "INSERT INTO tbl_salas (nombre_sala, capacidad, tipo_sala, imagen_sala) VALUES (?, ?, ?, ?)";
     $stmt = $conexion->prepare($query);
     
-    if ($stmt->execute([$nombreSala, $capacidad, $tipoSala])) {
+    if ($stmt->execute([$nombreSala, $capacidad, $tipoSala, $imagenSala])) {
         header("Location: ../gestionar_salas.php?tipo=salas&mensaje=creado");
         exit();
     } else {
@@ -66,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container container-crud">
         <h2 class="mb-4">Crear Nueva Sala</h2>
-        <form method="POST" class="form-crear-sala border p-4 bg-light">
+        <form method="POST" class="form-crear-sala border p-4 bg-light" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="nombre_sala">Nombre de la Sala:</label>
                 <input type="text" id="nombre_sala" name="nombre_sala" required class="form-control">
@@ -85,6 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="<?php echo htmlspecialchars($tipo); ?>"><?php echo ucfirst(htmlspecialchars($tipo)); ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label for="imagen_sala">Imagen de la Sala:</label>
+                <input type="file" id="imagen_sala" name="imagen_sala" accept="image/*" class="form-control">
             </div>
 
             <button type="submit" class="btn btn-primary">Crear Sala</button>

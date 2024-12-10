@@ -29,12 +29,11 @@ $result_mesas = $stmt_mesas->fetchAll(PDO::FETCH_ASSOC);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $numero_mesa = $_POST['numero_mesa'];
     $numero_sillas = $_POST['numero_sillas'];
-    $estado = $_POST['estado'];
 
     // Insertar nueva mesa
-    $query = "INSERT INTO tbl_mesas (numero_mesa, id_sala, numero_sillas, estado) VALUES (?, ?, ?, ?)";
+    $query = "INSERT INTO tbl_mesas (numero_mesa, id_sala, numero_sillas) VALUES (?, ?, ?)";
     $stmt = $conexion->prepare($query);
-    $stmt->execute([$numero_mesa, $id_sala, $numero_sillas, $estado]);
+    $stmt->execute([$numero_mesa, $id_sala, $numero_sillas]);
 
     header("Location: añadir_mesa.php?id_sala=$id_sala");
     exit();
@@ -85,13 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label for="numero_sillas" class="form-label">Número de Sillas:</label>
                 <input type="number" name="numero_sillas" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="estado" class="form-label">Estado:</label>
-                <select name="estado" class="form-select">
-                    <option value="libre">Libre</option>
-                    <option value="ocupada">Ocupada</option>
-                </select>
             </div>
             <button type="submit" class="btn btn-primary">Añadir Mesa</button>
         </form>

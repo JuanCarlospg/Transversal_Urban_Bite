@@ -79,8 +79,8 @@ if (!isset($_SESSION['usuario'])) {
 
                         // Mostrar la información
                         echo "<a class='image-container' href='./gestionar_mesas.php?categoria=" . urlencode($categoria_seleccionada) . "&id_sala=" . $id_sala . "'>
-                    <img src='./img/" . htmlspecialchars($sala['nombre_sala']) . ".jpg' alt='' id='terraza'>
-                    <div class='text-overlay'>" . htmlspecialchars($sala['nombre_sala']) . "<br>Sillas libres: " . ($sillas_libres ?? 0) . "/" . ($total_sillas ?? 0)  . "</div>
+                    <img src='./" . htmlspecialchars($sala['imagen_sala'] ?? 'default.jpg') . "' alt='' id='terraza'>
+                    <div class='text-overlay'>" . htmlspecialchars($sala['nombre_sala'] ?? 'Sala sin nombre') . "<br>Sillas libres: " . ($sillas_libres ?? 0) . "/" . ($total_sillas ?? 0)  . "</div>
                 </a>";
                     }
                 } else {

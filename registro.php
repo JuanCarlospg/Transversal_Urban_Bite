@@ -130,8 +130,7 @@ if (!isset($_SESSION['usuario'])) {
                             FROM tbl_ocupaciones o
                             JOIN tbl_mesas m ON o.id_mesa = m.id_mesa
                             JOIN tbl_salas s ON m.id_sala = s.id_sala
-                            JOIN tbl_usuarios u ON o.id_usuario = u.id_usuario
-                            ORDER BY o.fecha_inicio DESC";
+                            JOIN tbl_usuarios u ON o.id_usuario = u.id_usuario";
 
         $filters = [];
         if ($usuario_filter) {
