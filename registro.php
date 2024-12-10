@@ -126,7 +126,8 @@ if (!isset($_SESSION['usuario'])) {
         <?php
         $query_historial = "SELECT u.nombre_user, s.nombre_sala, m.numero_mesa, m.estado, 
                                     o.fecha_inicio, o.fecha_fin, 
-                                    TIMESTAMPDIFF(MINUTE, o.fecha_inicio, o.fecha_fin) AS duracion
+                                    TIMESTAMPDIFF(MINUTE, o.fecha_inicio, o.fecha_fin) AS duracion,
+                                    o.nombre_reserva
                             FROM tbl_ocupaciones o
                             JOIN tbl_mesas m ON o.id_mesa = m.id_mesa
                             JOIN tbl_salas s ON m.id_sala = s.id_sala
@@ -179,6 +180,7 @@ if (!isset($_SESSION['usuario'])) {
                         <th>Fecha Inicio</th>
                         <th>Fecha Fin</th>
                         <th>Duración (minutos)</th>
+                        <th>Nombre de Reserva</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -192,6 +194,7 @@ if (!isset($_SESSION['usuario'])) {
                         <td>{$ocupacion['fecha_inicio']}</td>
                         <td>{$ocupacion['fecha_fin']}</td>
                         <td>{$ocupacion['duracion']}</td>
+                        <td>{$ocupacion['nombre_reserva']}</td>
                     </tr>";
                     }
                     ?>

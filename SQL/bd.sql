@@ -23,7 +23,7 @@ CREATE TABLE tbl_salas (
     id_sala INT PRIMARY KEY AUTO_INCREMENT,
     capacidad INT,
     nombre_sala VARCHAR(100),
-    tipo_sala VARCHAR(50)       -- Tipo de sala (Terraza, Comedor, Sala Privada...)
+    tipo_sala VARCHAR(50)       
 );
 
 -- Tabla de mesas
@@ -42,12 +42,21 @@ CREATE TABLE tbl_ocupaciones (
     id_usuario INT,
     nombre_reserva VARCHAR(255), 
     id_mesa INT,
-    fecha_inicio DATETIME DEFAULT CURRENT_TIMESTAMP,    -- Fecha y hora del inicio de la ocupación
-    fecha_fin DATETIME,                                 -- Fecha y hora del final de la ocupación
+    fecha_inicio DATETIME DEFAULT CURRENT_TIMESTAMP,    
+    fecha_fin DATETIME,                                 
     FOREIGN KEY (id_usuario) REFERENCES tbl_usuarios(id_usuario),
     FOREIGN KEY (id_mesa) REFERENCES tbl_mesas(id_mesa)
 );
 
+
+CREATE TABLE tbl_reservas (
+    id_reserva INT PRIMARY KEY AUTO_INCREMENT,
+    id_mesa INT NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    FOREIGN KEY (id_mesa) REFERENCES tbl_mesas(id_mesa)
+);
 -- Insertar roles
 INSERT INTO tbl_roles (nombre_rol) VALUES ('Camarero'), ('Gerente'), ('Mantenimiento'),('Administrador');
 

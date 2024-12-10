@@ -114,14 +114,12 @@ try {
                         </div>
                         <div class='mesa-info'>
                             <p><strong>Sala:</strong> " . htmlspecialchars($categoria_seleccionada) . "</p>
-                            <p><strong>Estado:</strong> <span class='" . ($estado_actual == 'libre' ? 'estado-libre' : 'estado-ocupada') . "'>" . ucfirst($estado_actual) . "</span></p>
                             <p><strong>Sillas:</strong> " . htmlspecialchars($mesa['numero_sillas']) . "</p>
                         </div>
-                        <form method='POST' action='gestionar_mesas.php?categoria=$categoria_seleccionada&id_sala=$id_sala'>
-                            <input type='hidden' name='mesa_id' value='" . htmlspecialchars($mesa['id_mesa']) . "'>
-                            <input type='hidden' name='estado' value='" . $estado_actual . "'>
-                            <button type='submit' name='cambiar_estado' class='btn-estado " . ($estado_actual === 'libre' ? 'btn-libre' : 'btn-ocupada') . "' " . ($desactivar_boton ? 'disabled' : '') . ">" . ($estado_opuesto === 'Liberar' && $desactivar_boton ? 'No puedes liberar esta mesa' : $estado_opuesto) . "</button>
-                        </form>
+
+                        <td>
+                            <a href='./php/reservar_mesa.php?id_mesa=" . $mesa['id_mesa'] . "' class='btn btn-success btn-lg w-100'>Reservar</a>
+                        </td>
                     </div>";
                             }
                         } else {
@@ -177,6 +175,7 @@ try {
             }
             ?>
         </div>
+
         <script src="./js/sweetalert.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 </body>
