@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const idSalaSelect = document.querySelector('select[name="id_sala"]');
     const numeroSillasInput = document.querySelector('input[name="numero_sillas"]');
 
-    // Función para mostrar mensajes de error
     function mostrarError(input, mensaje) {
-        limpiarErrores(input); // Limpiar errores específicos del campo
+        limpiarErrores(input);
         const errorElement = document.createElement('span');
         errorElement.className = 'error-message';
         errorElement.style.color = 'red';
@@ -14,13 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         input.parentNode.insertBefore(errorElement, input.nextSibling);
     }
 
-    // Función para limpiar mensajes de error específicos del campo
     function limpiarErrores(input) {
         const errorMessages = input.parentNode.querySelectorAll('.error-message');
         errorMessages.forEach(error => error.remove());
     }
 
-    // Validar número de la mesa
     numeroMesaInput.addEventListener('blur', function() {
         const numeroMesa = numeroMesaInput.value.trim();
         if (!numeroMesa) {
@@ -28,20 +25,19 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (isNaN(numeroMesa) || numeroMesa <= 0) {
             mostrarError(numeroMesaInput, "El número de la mesa debe ser un número positivo.");
         } else {
-            limpiarErrores(numeroMesaInput); // Limpiar errores solo si el campo es válido
+            limpiarErrores(numeroMesaInput);
         }
     });
 
-    // Validar sala
+
     idSalaSelect.addEventListener('blur', function() {
         if (idSalaSelect.value === "") {
             mostrarError(idSalaSelect, "Debes seleccionar una sala.");
         } else {
-            limpiarErrores(idSalaSelect); // Limpiar errores solo si el campo es válido
+            limpiarErrores(idSalaSelect);
         }
     });
 
-    // Validar número de sillas
     numeroSillasInput.addEventListener('blur', function() {
         const numeroSillas = numeroSillasInput.value.trim();
         if (!numeroSillas) {
@@ -49,11 +45,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (isNaN(numeroSillas) || numeroSillas <= 0) {
             mostrarError(numeroSillasInput, "El número de sillas debe ser un número positivo.");
         } else {
-            limpiarErrores(numeroSillasInput); // Limpiar errores solo si el campo es válido
+            limpiarErrores(numeroSillasInput);
         }
     });
 
-    // Validar formulario al enviar
     form.addEventListener('submit', function(event) {
         limpiarErrores(numeroMesaInput);
         limpiarErrores(idSalaSelect);
@@ -84,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (errores) {
-            event.preventDefault(); // Evitar el envío del formulario
+            event.preventDefault();
         }
     });
 });

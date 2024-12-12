@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const contrasenaInput = document.querySelector('input[name="contrasena"]');
     const idRolSelect = document.querySelector('select[name="id_rol"]');
 
-    // Función para mostrar mensajes de error
     function mostrarError(input, mensaje) {
-        limpiarErrores(input); // Limpiar errores específicos del campo
+        limpiarErrores(input); 
         const errorElement = document.createElement('span');
         errorElement.className = 'error-message';
         errorElement.style.color = 'red';
@@ -14,13 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         input.parentNode.insertBefore(errorElement, input.nextSibling);
     }
 
-    // Función para limpiar mensajes de error específicos del campo
     function limpiarErrores(input) {
         const errorMessages = input.parentNode.querySelectorAll('.error-message');
         errorMessages.forEach(error => error.remove());
     }
 
-    // Validar nombre de usuario
     nombreUserInput.addEventListener('blur', function() {
         const nombreUser = nombreUserInput.value.trim();
         if (!nombreUser) {
@@ -28,11 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (!/^[a-zA-Z0-9_]+$/.test(nombreUser)) {
             mostrarError(nombreUserInput, "El nombre de usuario solo puede contener letras, números y guiones bajos.");
         } else {
-            limpiarErrores(nombreUserInput); // Limpiar errores solo si el campo es válido
+            limpiarErrores(nombreUserInput);
         }
     });
 
-    // Validar contraseña
     contrasenaInput.addEventListener('blur', function() {
         const contrasena = contrasenaInput.value.trim();
         if (!contrasena) {
@@ -40,20 +36,18 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (contrasena.length < 6) {
             mostrarError(contrasenaInput, "La contraseña debe tener al menos 6 caracteres.");
         } else {
-            limpiarErrores(contrasenaInput); // Limpiar errores solo si el campo es válido
+            limpiarErrores(contrasenaInput);
         }
     });
 
-    // Validar rol
     idRolSelect.addEventListener('blur', function() {
         if (idRolSelect.value === "") {
             mostrarError(idRolSelect, "Debes seleccionar un rol.");
         } else {
-            limpiarErrores(idRolSelect); // Limpiar errores solo si el campo es válido
+            limpiarErrores(idRolSelect);
         }
     });
 
-    // Validar formulario al enviar
     form.addEventListener('submit', function(event) {
         limpiarErrores(nombreUserInput);
         limpiarErrores(contrasenaInput);
@@ -82,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (errores) {
-            event.preventDefault(); // Evitar el envío del formulario
+            event.preventDefault();
         }
     });
 }); 

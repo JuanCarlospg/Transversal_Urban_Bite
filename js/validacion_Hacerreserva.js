@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const fechaInput = document.querySelector('input[name="fecha"]');
     const franjaSelect = document.querySelector('select[name="id_franja"]');
 
-    // Función para mostrar mensajes de error
     function mostrarError(input, mensaje) {
         limpiarErrores(input);
         const errorElement = document.createElement('span');
@@ -14,13 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         input.parentNode.insertBefore(errorElement, input.nextSibling);
     }
 
-    // Función para limpiar mensajes de error
     function limpiarErrores(input) {
         const errorMessages = input.parentNode.querySelectorAll('.error-message');
         errorMessages.forEach(error => error.remove());
     }
 
-    // Validar nombre
     nombreInput.addEventListener('blur', function() {
         const nombre = nombreInput.value.trim();
         if (!nombre) {
@@ -32,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validar fecha
     fechaInput.addEventListener('change', function() {
         const fecha = fechaInput.value;
         const hoy = new Date().toISOString().split('T')[0];
@@ -45,13 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
             limpiarErrores(fechaInput);
         }
 
-        // Mantener la funcionalidad existente de actualización
         const urlParams = new URLSearchParams(window.location.search);
-        const idReserva = urlParams.get('id_reserva');
-        window.location.href = `editar_reserva.php?id_reserva=${idReserva}&filtro_fecha=${this.value}`;
+        const idMesa = urlParams.get('id_mesa');
+        window.location.href = `hacer_reserva.php?id_mesa=${idMesa}&filtro_fecha=${this.value}`;
     });
 
-    // Validar franja horaria
     franjaSelect.addEventListener('blur', function() {
         if (franjaSelect.value === "") {
             mostrarError(franjaSelect, "Debes seleccionar una franja horaria.");
@@ -60,14 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // También validar al cambiar el valor del select
     franjaSelect.addEventListener('change', function() {
         if (franjaSelect.value !== "") {
             limpiarErrores(franjaSelect);
         }
     });
 
-    // Validar formulario al enviar
     form.addEventListener('submit', function(event) {
         limpiarErrores(nombreInput);
         limpiarErrores(fechaInput);

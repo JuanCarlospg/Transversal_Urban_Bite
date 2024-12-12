@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const contrasenaInput = document.querySelector('input[name="contrasena"]');
     const idRolSelect = document.querySelector('select[name="id_rol"]');
 
-    // Función para mostrar mensajes de error
     function mostrarError(input, mensaje) {
-        limpiarErrores(input); // Limpiar errores específicos del campo
+        limpiarErrores(input);
         const errorElement = document.createElement('span');
         errorElement.className = 'error-message';
         errorElement.style.color = 'red';
@@ -14,13 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
         input.parentNode.insertBefore(errorElement, input.nextSibling);
     }
 
-    // Función para limpiar mensajes de error específicos del campo
     function limpiarErrores(input) {
         const errorMessages = input.parentNode.querySelectorAll('.error-message');
         errorMessages.forEach(error => error.remove());
     }
 
-    // Validar nombre de usuario
+
     nombreUserInput.addEventListener('blur', function() {
         const nombreUser = nombreUserInput.value.trim();
         if (!nombreUser) {
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validar contraseña solo si se introduce
     contrasenaInput.addEventListener('blur', function() {
         const contrasena = contrasenaInput.value.trim();
         if (contrasena && contrasena.length < 6) {
@@ -38,14 +35,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validar rol
     idRolSelect.addEventListener('blur', function() {
         if (idRolSelect.value === "") {
             mostrarError(idRolSelect, "Debes seleccionar un rol.");
         }
     });
 
-    // Validar formulario al enviar
     form.addEventListener('submit', function(event) {
         limpiarErrores(nombreUserInput);
         limpiarErrores(contrasenaInput);
@@ -70,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (errores) {
-            event.preventDefault(); // Evitar el envío del formulario
+            event.preventDefault();
         }
     });
 });
