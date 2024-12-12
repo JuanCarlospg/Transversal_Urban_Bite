@@ -9,28 +9,59 @@ $stmt_usuario->execute([$id_usuario]);
 $usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre_user = $_POST['nombre_user'];
-    $id_rol = $_POST['id_rol'];
+    $nombre_user = trim($_POST['nombre_user']);
     $contrasena = $_POST['contrasena'];
+    $id_rol = $_POST['id_rol'];
+
+    $errores = [];
+
+    if (empty($nombre_user)) {
+        $errores[] = "El nombre de usuario es obligatorio.";
+    } else if (!preg_match("/^[a-zA-Z0-9_]+$/", $nombre_user)) {
+        $errores[] = "El nombre de usuario solo puede contener letras, números y guiones bajos.";
+    } else {
+        $query = "SELECT COUNT(*) FROM tbl_usuarios WHERE nombre_user = ? AND id_usuario != ?";
+        $stmt = $conexion->prepare($query);
+        $stmt->execute([$nombre_user, $id_usuario]);
+        $existe = $stmt->fetchColumn();
+
+        if ($existe) {
+            $errores[] = "El nombre de usuario ya está en uso.";
+        }
+    }
+
+    if (!empty($contrasena) && strlen($contrasena) < 6) {
+        $errores[] = "La contraseña debe tener al menos 6 caracteres.";
+    }
+
+    if (count($errores) > 0) {
+        $_SESSION['errores'] = $errores;
+        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id_usuario);
+        exit();
+    }
+
+    $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ?";
+    $params = [$nombre_user, $id_rol];
 
     if (!empty($contrasena)) {
         $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
-        $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ?, contrasena = ? WHERE id_usuario = ?";
-        $stmt = $conexion->prepare($query);
-        $stmt->execute([$nombre_user, $id_rol, $contrasena_hash, $id_usuario]);
-    } else {
-        $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ? WHERE id_usuario = ?";
-        $stmt = $conexion->prepare($query);
-        $stmt->execute([$nombre_user, $id_rol, $id_usuario]);
+        $query .= ", contrasena = ?";
+        $params[] = $contrasena_hash;
     }
 
-    if ($stmt->rowCount()) {
-        header("Location: ../gestionar_usuarios.php");
-        exit();
-    } else {
-        echo "Error al actualizar el usuario.";
-    }
+    $query .= " WHERE id_usuario = ?";
+    $params[] = $id_usuario;
+
+    $stmt = $conexion->prepare($query);
+    $stmt->execute($params);
+
+    header("Location: ../gestionar_usuarios.php");
+    exit();
 }
+
+// Obtener errores de la sesión
+$errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
+unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
 
 // Obtener roles para el formulario
 $query_roles = "SELECT * FROM tbl_roles";
@@ -47,6 +78,7 @@ $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="../css/estilos.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Editar Usuario</title>
+    <script src="../js/validacion_EditUser.js"></script>
 </head>
 <body>
     <div class="container">
@@ -74,9 +106,16 @@ $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
     <div class="container container-crud">
         <h2 class="mb-4">Editar Usuario</h2>
         <form method="POST" class="form-crear-usuario border p-4">
+            <?php if (!empty($errores)): ?>
+                <div class="alert alert-danger mb-3">
+                    <?php foreach ($errores as $error): ?>
+                        <p><?php echo htmlspecialchars($error); ?></p>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             <div class="form-group">
                 <label for="nombre_user">Nombre de Usuario:</label>
-                <input type="text" name="nombre_user" value="<?php echo htmlspecialchars($usuario['nombre_user']); ?>" required class="form-control">
+                <input type="text" name="nombre_user" value="<?php echo htmlspecialchars($usuario['nombre_user']); ?>" class="form-control">
             </div>
             <div class="form-group">
                 <label for="contrasena">Nueva Contraseña (opcional):</label>

@@ -54,13 +54,13 @@ try {
             <!-- Enlace para gestionar usuarios, visible solo para administradores -->
             <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Administrador'): ?>
                 <div class="navbar-right">
-                    <a href="./gestionar_usuarios.php" class="navbar-icon">Gestionar Usuarios</a>
+                    <a href="./gestionar_usuarios.php"><img src="./img/User.png" alt="Ícono adicional" class="navbar-icon" style="margin-right: 10px;"></a>
                 </div>
             <?php endif; ?>
                         <!-- Enlace para gestionar usuarios, visible solo para administradores -->
                         <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Administrador'): ?>
                 <div class="navbar-right">
-                    <a href="./gestionar_salas.php" class="navbar-icon">Gestionar Salas</a>
+                    <a href="./gestionar_salas.php"><img src="./img/Sala.png" alt="Ícono adicional" class="navbar-icon" style="margin-right: 10px;"></a>
                 </div>
             <?php endif; ?>
 

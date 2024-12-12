@@ -9,33 +9,51 @@ if (!$id_mesa) {
     die("ID de mesa no proporcionado.");
 }
 
-// Procesar el formulario de reserva
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre = $_POST['nombre'];
-    $fecha = $_POST['fecha'];
-    $hora_inicio = $_POST['hora_inicio'];
+// Consultar las franjas horarias disponibles
+$query_franjas = "SELECT id_franja, hora_inicio, hora_fin FROM tbl_franjas_horarias";
+$stmt_franjas = $conexion->prepare($query_franjas);
+$stmt_franjas->execute();
+$franjas = $stmt_franjas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Verificar si ya existe una reserva para la misma mesa, fecha y hora
-    $query_check = "SELECT COUNT(*) FROM tbl_reservas WHERE id_mesa = ? AND fecha = ? AND hora_inicio = ?";
+// Obtener las franjas horarias ya reservadas para la fecha seleccionada
+$reservadas = [];
+$fecha_seleccionada = $_POST['fecha'] ?? $_GET['filtro_fecha'] ?? date('Y-m-d');  // Usar la fecha proporcionada o la fecha actual si no se selecciona una
+if ($fecha_seleccionada) {
+    $query_reservadas = "SELECT id_franja FROM tbl_reservas WHERE id_mesa = ? AND fecha = ?";
+    $stmt_reservadas = $conexion->prepare($query_reservadas);
+    $stmt_reservadas->execute([$id_mesa, $fecha_seleccionada]);
+    $reservadas = $stmt_reservadas->fetchAll(PDO::FETCH_COLUMN);
+}
+
+// Procesar el formulario de reserva
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $fecha_seleccionada) {
+    $nombre = $_POST['nombre'];
+    $id_franja = $_POST['id_franja'];
+
+    // Obtener la franja horaria seleccionada
+    $query_franja = "SELECT hora_inicio, hora_fin FROM tbl_franjas_horarias WHERE id_franja = ?";
+    $stmt_franja = $conexion->prepare($query_franja);
+    $stmt_franja->execute([$id_franja]);
+    $franja = $stmt_franja->fetch(PDO::FETCH_ASSOC);
+
+    // Verificar si ya existe una reserva para la misma mesa, fecha y franja horaria
+    $query_check = "SELECT COUNT(*) FROM tbl_reservas WHERE id_mesa = ? AND fecha = ? AND id_franja = ?";
     $stmt_check = $conexion->prepare($query_check);
-    $stmt_check->execute([$id_mesa, $fecha, $hora_inicio]);
+    $stmt_check->execute([$id_mesa, $fecha_seleccionada, $id_franja]);
     $exists = $stmt_check->fetchColumn();
 
     if ($exists) {
-        $error_message = "Ya existe una reserva para esta hora.";
+        $error_message = "Ya existe una reserva para esta franja horaria.";
     } else {
-        // Calcular la hora de finalización (una hora después de la hora de inicio)
-        $hora_fin = date('H:i', strtotime($hora_inicio) + 3600);
-
         // Insertar la nueva reserva en la base de datos
-        $query_insert = "INSERT INTO tbl_reservas (id_mesa, nombre, fecha, hora_inicio, hora_fin) VALUES (?, ?, ?, ?, ?)";
+        $query_insert = "INSERT INTO tbl_reservas (id_mesa, nombre, fecha, id_franja) VALUES (?, ?, ?, ?)";
         $stmt_insert = $conexion->prepare($query_insert);
-        $stmt_insert->execute([$id_mesa, $nombre, $fecha, $hora_inicio, $hora_fin]);
+        $stmt_insert->execute([$id_mesa, $nombre, $fecha_seleccionada, $id_franja]);
 
         // Registrar la ocupación
         $query_ocupacion = "INSERT INTO tbl_ocupaciones (id_usuario, nombre_reserva, id_mesa, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?)";
         $stmt_ocupacion = $conexion->prepare($query_ocupacion);
-        $stmt_ocupacion->execute([$_SESSION['id_usuario'], $nombre, $id_mesa, "$fecha $hora_inicio", "$fecha $hora_fin"]);
+        $stmt_ocupacion->execute([$_SESSION['id_usuario'], $nombre, $id_mesa, "$fecha_seleccionada {$franja['hora_inicio']}", "$fecha_seleccionada {$franja['hora_fin']}"]);
 
         $success_message = "Reserva y ocupación realizadas con éxito.";
 
@@ -46,16 +64,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Consultar las reservas existentes para la mesa con filtros
-$query_reservas = "SELECT id_reserva, nombre, fecha, hora_inicio, hora_fin FROM tbl_reservas WHERE id_mesa = ?";
+$query_reservas = "SELECT r.id_reserva, r.nombre, r.fecha, f.hora_inicio, f.hora_fin 
+                   FROM tbl_reservas r
+                   JOIN tbl_franjas_horarias f ON r.id_franja = f.id_franja
+                   WHERE r.id_mesa = ?";
 $params = [$id_mesa];
 
 if (!empty($_GET['filtro_fecha'])) {
-    $query_reservas .= " AND fecha = ?";
+    $query_reservas .= " AND r.fecha = ?";
     $params[] = $_GET['filtro_fecha'];
 }
 
 if (!empty($_GET['filtro_hora'])) {
-    $query_reservas .= " AND hora_inicio = ?";
+    $query_reservas .= " AND f.hora_inicio = ?";
     $params[] = $_GET['filtro_hora'];
 }
 
@@ -74,51 +95,6 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="../css/estilos.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <title>Reservas de Mesa</title>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const reservas = <?php echo json_encode($reservas); ?>;
-            console.log('Reservas:', reservas);
-
-            const fechaInput = document.getElementById('fecha');
-            const horaSelect = document.getElementById('hora_inicio');
-
-            fechaInput.addEventListener('change', function() {
-                const selectedDate = this.value;
-                console.log('Fecha seleccionada:', selectedDate);
-
-                const reservedTimes = [...new Set(reservas
-                    .filter(reserva => reserva.fecha === selectedDate)
-                    .map(reserva => reserva.hora_inicio.substring(0, 5)))];
-
-                console.log('Horas reservadas:', reservedTimes);
-
-                // Limpiar opciones de hora
-                horaSelect.innerHTML = '';
-
-                // Añadir opción predeterminada
-                const defaultOption = document.createElement('option');
-                defaultOption.textContent = 'Seleccione una hora';
-                defaultOption.disabled = true;
-                defaultOption.selected = true;
-                horaSelect.appendChild(defaultOption);
-
-                // Generar opciones de hora desde las 10:00 hasta las 20:00
-                for (let hour = 10; hour <= 20; hour++) {
-                    const time = `${hour.toString().padStart(2, '0')}:00`;
-                    const option = document.createElement('option');
-                    option.value = time;
-                    option.textContent = time;
-                    if (reservedTimes.includes(time)) {
-                        option.disabled = true;
-                    }
-                    horaSelect.appendChild(option);
-                }
-            });
-
-            // Disparar el evento de cambio al cargar la página para establecer las horas iniciales
-            fechaInput.dispatchEvent(new Event('change'));
-        });
-    </script>
 </head>
 <body>
     <div class="container">
@@ -149,17 +125,21 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
         <!-- Formulario para realizar una nueva reserva -->
         <form method="POST" class="form-reserva mb-4 p-4 border rounded bg-light">
             <div class="form-group mb-3">
-                <label for="nombre" class="form-label">Nombre:</label>
+                <label for="nombre" class="form-label1">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" class="form-control" required>
             </div>
             <div class="form-group mb-3">
-                <label for="fecha" class="form-label">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="form-control" value="<?php echo htmlspecialchars($_POST['fecha'] ?? date('Y-m-d')); ?>" required>
+                <label for="fecha" class="form-label1">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" class="form-control" value="<?php echo htmlspecialchars($fecha_seleccionada ?? date('Y-m-d')); ?>" required>
             </div>
             <div class="form-group mb-3">
-                <label for="hora_inicio" class="form-label">Hora de Inicio:</label>
-                <select id="hora_inicio" name="hora_inicio" class="form-control" required>
-                    <!-- Las opciones se generarán dinámicamente -->
+                <label for="id_franja" class="form-label1">Franja Horaria:</label>
+                <select id="id_franja" name="id_franja" class="form-control" required>
+                    <?php foreach ($franjas as $franja): ?>
+                        <option value="<?php echo $franja['id_franja']; ?>" <?php echo in_array($franja['id_franja'], $reservadas) ? 'disabled' : ''; ?>>
+                            <?php echo $franja['hora_inicio'] . ' - ' . $franja['hora_fin']; ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Reservar</button>
@@ -182,12 +162,11 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
                 <label for="filtro_hora" class="form-label">Hora:</label>
                 <select id="filtro_hora" name="filtro_hora" class="form-control">
                     <option value="">Todas</option>
-                    <?php for ($hour = 10; $hour <= 20; $hour++): ?>
-                        <?php $time = sprintf('%02d:00', $hour); ?>
-                        <option value="<?php echo $time; ?>" <?php echo (isset($_GET['filtro_hora']) && $_GET['filtro_hora'] === $time) ? 'selected' : ''; ?>>
-                            <?php echo $time; ?>
+                    <?php foreach ($franjas as $franja): ?>
+                        <option value="<?php echo $franja['hora_inicio']; ?>" <?php echo (isset($_GET['filtro_hora']) && $_GET['filtro_hora'] === $franja['hora_inicio']) ? 'selected' : ''; ?>>
+                            <?php echo $franja['hora_inicio']; ?>
                         </option>
-                    <?php endfor; ?>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary me-2">Filtrar</button>
@@ -215,15 +194,13 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
                         <td><?php echo htmlspecialchars($reserva['hora_inicio']); ?></td>
                         <td><?php echo htmlspecialchars($reserva['hora_fin']); ?></td>
                         <td>
-                            <a href="eliminar_reserva.php?id_reserva=<?php echo $reserva['id_reserva']; ?>&id_mesa=<?php echo $id_mesa; ?>" class="btn btn-danger btn-sm">Eliminar</a>
+                            <a href="editar_reserva.php?id_reserva=<?php echo htmlspecialchars($reserva['id_reserva']); ?>" class="btn btn-warning">Editar</a>
+                            <a href="eliminar_reserva.php?id_reserva=<?php echo htmlspecialchars($reserva['id_reserva']); ?>" class="btn btn-danger">Eliminar</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

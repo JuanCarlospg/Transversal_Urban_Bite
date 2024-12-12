@@ -30,14 +30,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $numero_mesa = $_POST['numero_mesa'];
     $numero_sillas = $_POST['numero_sillas'];
 
+    $errores = [];
+
+    if (empty($numero_mesa)) {
+        $errores[] = "El número de mesa es obligatorio.";
+    } elseif (!is_numeric($numero_mesa) || $numero_mesa <= 0) {
+        $errores[] = "El número de mesa debe ser un número positivo.";
+    } else {
+        // Verificar si el número de mesa ya existe en la misma sala
+        $query_check_mesa = "SELECT COUNT(*) FROM tbl_mesas WHERE numero_mesa = ? AND id_sala = ?";
+        $stmt_check_mesa = $conexion->prepare($query_check_mesa);
+        $stmt_check_mesa->execute([$numero_mesa, $id_sala]);
+        $mesa_existe = $stmt_check_mesa->fetchColumn();
+
+        if ($mesa_existe > 0) {
+            $errores[] = "El número de mesa ya está en uso en esta sala. Por favor, elige otro.";
+        }
+
+    }
+
+    if (empty($numero_sillas)) {
+        $errores[] = "El número de sillas es obligatorio.";
+    } elseif (!is_numeric($numero_sillas) || $numero_sillas <= 0) {
+        $errores[] = "El número de sillas debe ser un número positivo.";
+    }
+
+    if (count($errores) > 0) {
+        $_SESSION['errores'] = $errores;
+        header("Location: " . $_SERVER['PHP_SELF'] . "?id_sala=" . $id_sala);
+        exit();
+    }
+
     // Insertar nueva mesa
-    $query = "INSERT INTO tbl_mesas (numero_mesa, id_sala, numero_sillas) VALUES (?, ?, ?)";
+    $query = "INSERT INTO tbl_mesas (numero_mesa, id_sala, numero_sillas, estado) VALUES (?, ?, ?, 'libre')";
     $stmt = $conexion->prepare($query);
     $stmt->execute([$numero_mesa, $id_sala, $numero_sillas]);
 
     header("Location: añadir_mesa.php?id_sala=$id_sala");
     exit();
 }
+
+// Obtener errores de la sesión
+$errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
+unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
 ?>
 
 <!DOCTYPE html>
@@ -49,13 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/estilos.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <title>Gestión de Mesas</title>
+    <script src="../js/validacion_AñadirMesa.js"></script>
 </head>
 <body>
     <div class="container">
         <nav class="navegacion">
             <div class="navbar-left">
-                <a href="./menu.php"><img src="../img/logo.png" alt="Logo de la Marca" class="logo" style="width: 100%;"></a>
-                <a href="./registro.php"><img src="../img/lbook.png" alt="Ícono adicional" class="navbar-icon"></a>
+                <a href="../menu.php"><img src="../img/logo.png" alt="Logo de la Marca" class="logo" style="width: 100%;"></a>
+                <a href="../registro.php"><img src="../img/lbook.png" alt="Ícono adicional" class="navbar-icon"></a>
             </div>
             
             <div class="navbar-title">
@@ -64,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 } ?></h3>
             </div>
             <div class="navbar-right" style="margin-right: 18px;">
-                <a href="../menu.php"><img src="../img/atras.png" alt="Logout" class="navbar-icon"></a>
+                <a href="../gestionar_salas.php"><img src="../img/atras.png" alt="Logout" class="navbar-icon"></a>
             </div>
 
             <div class="navbar-right">
@@ -76,14 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container container-crud">
         <h2 class="mb-4">Gestión de Mesas en la Sala "<?php echo $sala['nombre_sala']; ?>"</h2>
         
+        <?php if (!empty($errores)): ?>
+            <div class="alert alert-danger mb-3">
+                <?php foreach ($errores as $error): ?>
+                    <p><?php echo htmlspecialchars($error); ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <form method="POST" class="mb-4 p-4 border rounded bg-light">
             <div class="mb-3">
-                <label for="numero_mesa" class="form-label">Número de Mesa:</label>
-                <input type="number" name="numero_mesa" class="form-control" required>
+                <label for="numero_mesa" class="form-label1">Número de Mesa:</label>
+                <input type="number" name="numero_mesa" class="form-control">
             </div>
             <div class="mb-3">
-                <label for="numero_sillas" class="form-label">Número de Sillas:</label>
-                <input type="number" name="numero_sillas" class="form-control" required>
+                <label for="numero_sillas" class="form-label1">Número de Sillas:</label>
+                <input type="number" name="numero_sillas" class="form-control">
             </div>
             <button type="submit" class="btn btn-primary">Añadir Mesa</button>
         </form>
@@ -117,10 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </tbody>
             </table>
         <?php else: ?>
-            <pc class="mensaje">No hay mesas creadas en esta sala.</p>
+            <p class="mensaje">No hay mesas creadas en esta sala.</p>
         <?php endif; ?>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+3paNdF+Ll9gL0L4cU5I5t5L5t5L5" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+3paNdF+Ll9gL0L4cU5b5L5b5L5b5" crossorigin="anonymous"></script>
 </body>
 </html>

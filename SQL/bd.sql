@@ -57,6 +57,26 @@ CREATE TABLE tbl_reservas (
     hora TIME NOT NULL,
     FOREIGN KEY (id_mesa) REFERENCES tbl_mesas(id_mesa)
 );
+
+CREATE TABLE tbl_franjas_horarias (
+    id_franja INT PRIMARY KEY AUTO_INCREMENT,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL
+);
+
+-- Insertar las franjas horarias de 10:00 a 20:00
+INSERT INTO tbl_franjas_horarias (hora_inicio, hora_fin)
+VALUES ('10:00:00', '11:00:00'),
+       ('11:00:00', '12:00:00'),
+       ('12:00:00', '13:00:00'),
+       ('13:00:00', '14:00:00'),
+       ('14:00:00', '15:00:00'),
+       ('15:00:00', '16:00:00'),
+       ('16:00:00', '17:00:00'),
+       ('17:00:00', '18:00:00'),
+       ('18:00:00', '19:00:00'),
+       ('19:00:00', '20:00:00');
+
 -- Insertar roles
 INSERT INTO tbl_roles (nombre_rol) VALUES ('Camarero'), ('Gerente'), ('Mantenimiento'),('Administrador');
 
