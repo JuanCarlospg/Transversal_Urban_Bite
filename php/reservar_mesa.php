@@ -122,34 +122,14 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
     <div class="container container-crud">
         <h2>Reservas para la Mesa <?php echo htmlspecialchars($id_mesa); ?></h2>
 
-        <!-- Formulario para realizar una nueva reserva -->
-        <form method="POST" class="form-reserva mb-4 p-4 border rounded bg-light">
-            <div class="form-group mb-3">
-                <label for="nombre" class="form-label1">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" class="form-control" required>
-            </div>
-            <div class="form-group mb-3">
-                <label for="fecha" class="form-label1">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="form-control" value="<?php echo htmlspecialchars($fecha_seleccionada ?? date('Y-m-d')); ?>" required>
-            </div>
-            <div class="form-group mb-3">
-                <label for="id_franja" class="form-label1">Franja Horaria:</label>
-                <select id="id_franja" name="id_franja" class="form-control" required>
-                    <?php foreach ($franjas as $franja): ?>
-                        <option value="<?php echo $franja['id_franja']; ?>" <?php echo in_array($franja['id_franja'], $reservadas) ? 'disabled' : ''; ?>>
-                            <?php echo $franja['hora_inicio'] . ' - ' . $franja['hora_fin']; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Reservar</button>
-        </form>
-        
-        <!-- Mostrar mensajes de error o éxito -->
-        <?php if (isset($error_message)): ?>
-            <div class="alert alert-danger"><?php echo $error_message; ?></div>
-        <?php elseif (isset($success_message)): ?>
-            <div class="alert alert-success"><?php echo $success_message; ?></div>
+        <a href="hacer_reserva.php?id_mesa=<?php echo $id_mesa; ?>" class="btn btn-primary mb-4">Nueva Reserva</a>
+
+        <?php if (isset($_GET['success'])): ?>
+            <div class="alert alert-success">Reserva realizada con éxito.</div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['updated'])): ?>
+            <div class="alert alert-success">Reserva actualizada con éxito.</div>
         <?php endif; ?>
 
         <form method="GET" class="d-flex align-items-end mb-4">

@@ -139,7 +139,7 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="form-group">
                 <label for="id_sala">Sala:</label>
-                <select id="id_sala" name="id_sala" required class="form-control">
+                <select id="id_sala" name="id_sala" class="form-control">
                     <option value="" disabled>Seleccione una sala</option>
                     <?php foreach ($salas as $sala): ?>
                         <option value="<?php echo htmlspecialchars($sala['id_sala']); ?>" <?php echo ($sala['id_sala'] == $mesa['id_sala']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($sala['nombre_sala']); ?></option>
