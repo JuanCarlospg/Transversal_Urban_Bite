@@ -2,14 +2,12 @@
 session_start();
 require_once('./conexion.php');
 
-// Obtener el ID de la reserva
 $id_reserva = $_GET['id_reserva'] ?? null;
 
 if (!$id_reserva) {
     die("ID de reserva no proporcionado.");
 }
 
-// Obtener los datos de la reserva actual
 $query_reserva = "SELECT r.*, m.id_mesa 
                  FROM tbl_reservas r 
                  JOIN tbl_mesas m ON r.id_mesa = m.id_mesa 
@@ -22,13 +20,11 @@ if (!$reserva) {
     die("Reserva no encontrada.");
 }
 
-// Obtener las franjas horarias disponibles
 $query_franjas = "SELECT id_franja, hora_inicio, hora_fin FROM tbl_franjas_horarias";
 $stmt_franjas = $conexion->prepare($query_franjas);
 $stmt_franjas->execute();
 $franjas = $stmt_franjas->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener las franjas horarias ya reservadas para la fecha seleccionada
 $fecha_seleccionada = $_POST['fecha'] ?? $_GET['filtro_fecha'] ?? $reserva['fecha'];
 $query_reservadas = "SELECT id_franja FROM tbl_reservas 
                     WHERE id_mesa = ? AND fecha = ? AND id_reserva != ?";
@@ -36,33 +32,28 @@ $stmt_reservadas = $conexion->prepare($query_reservadas);
 $stmt_reservadas->execute([$reserva['id_mesa'], $fecha_seleccionada, $id_reserva]);
 $reservadas = $stmt_reservadas->fetchAll(PDO::FETCH_COLUMN);
 
-// Procesar el formulario cuando se envía
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
     $fecha = $_POST['fecha'] ?? '';
     $id_franja = $_POST['id_franja'] ?? '';
     $errores = [];
 
-    // Validaciones del nombre
     if (empty($nombre)) {
         $errores['nombre'] = 'El nombre es obligatorio';
     } elseif (!preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,}$/', $nombre)) {
         $errores['nombre'] = 'El nombre debe contener solo letras y tener al menos 3 caracteres';
     }
 
-    // Validación de la fecha
     if (empty($fecha)) {
         $errores['fecha'] = 'La fecha es obligatoria';
     } elseif ($fecha < date('Y-m-d')) {
         $errores['fecha'] = 'La fecha no puede ser anterior a hoy';
     }
 
-    // Validación de la franja horaria
     if (empty($id_franja)) {
         $errores['franja'] = 'Debe seleccionar una franja horaria';
     }
 
-    // Verificar disponibilidad si la fecha o franja ha cambiado
     if (empty($errores) && ($fecha != $reserva['fecha'] || $id_franja != $reserva['id_franja'])) {
         $query_check = "SELECT COUNT(*) FROM tbl_reservas 
                        WHERE id_mesa = ? AND fecha = ? AND id_franja = ? AND id_reserva != ?";
@@ -75,16 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Si no hay errores, proceder con la actualización
     if (empty($errores)) {
-        // Actualizar la reserva
         $query_update = "UPDATE tbl_reservas 
                         SET nombre = ?, fecha = ?, id_franja = ? 
                         WHERE id_reserva = ?";
         $stmt_update = $conexion->prepare($query_update);
         $stmt_update->execute([$nombre, $fecha, $id_franja, $id_reserva]);
 
-        // Actualizar la ocupación
         $query_franja = "SELECT hora_inicio, hora_fin FROM tbl_franjas_horarias WHERE id_franja = ?";
         $stmt_franja = $conexion->prepare($query_franja);
         $stmt_franja->execute([$id_franja]);
@@ -104,7 +92,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reserva['fecha'] . '%'
         ]);
 
-        header("Location: reservar_mesa.php?id_mesa={$reserva['id_mesa']}&updated=1");
+        if ($stmt_update && $stmt_update_ocupacion) {
+            echo json_encode([
+                'success' => true,
+                'id_mesa' => $reserva['id_mesa']
+            ]);
+            exit();
+        } else {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Error al actualizar la reserva'
+            ]);
+            exit();
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Hay errores en el formulario']);
         exit();
     }
 }
@@ -120,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <title>Editar Reserva</title>
     <script src="../js/validaciones_editar_reserva.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -152,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-danger"><?php echo $error_message; ?></div>
         <?php endif; ?>
 
-        <form method="POST" class="form-reserva mb-4 p-4 border rounded bg-light">
+        <form method="POST" id="formReserva" class="form-reserva mb-4 p-4 border rounded bg-light">
             <div class="form-group mb-3">
                 <label for="nombre" class="form-label1">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" class="form-control" 
@@ -193,5 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
+    <script src="../js/sweetalert_editar_reserva.js"></script>
 </body>
 </html> 

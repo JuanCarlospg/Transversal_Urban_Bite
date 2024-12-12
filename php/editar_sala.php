@@ -2,7 +2,6 @@
 session_start();
 require_once('./conexion.php');
 
-// Obtener tipo de recurso y verificar su validez
 $tipo = $_GET['tipo'] ?? 'salas';
 $recursos = [
     'salas' => [
@@ -27,14 +26,12 @@ $config = $recursos[$tipo];
 $tabla = $config['tabla'];
 $campos = $config['campos'];
 
-// Obtener ID del recurso
 $id_campo = 'id_' . substr($tipo, 0, -1);
 $id = $_GET['id'] ?? null;
 if (!$id) {
     die("ID no proporcionado.");
 }
 
-// Obtener datos del recurso
 $query = "SELECT * FROM $tabla WHERE $id_campo = ?";
 $stmt = $conexion->prepare($query);
 $stmt->execute([$id]);
@@ -44,7 +41,6 @@ if (!$recurso) {
     die("Recurso no encontrado.");
 }
 
-// Procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombreSala = trim($_POST['nombre_sala']);
     $capacidad = $_POST['capacidad'];
@@ -55,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombreSala)) {
         $errores[] = "El nombre de la sala es obligatorio.";
     } else {
-        // Verificar si el nombre de la sala ya existe en otra sala
         $query_check_nombre = "SELECT COUNT(*) FROM tbl_salas WHERE nombre_sala = ? AND $id_campo != ?";
         $stmt_check_nombre = $conexion->prepare($query_check_nombre);
         $stmt_check_nombre->execute([$nombreSala, $id]);
@@ -77,32 +72,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($errores) > 0) {
-        $_SESSION['errores'] = $errores;
-        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
+        echo json_encode(['success' => false, 'message' => implode('<br>', $errores)]);
         exit();
     }
 
-    // Manejo de la imagen
-    if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
-        $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
-        move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala);
-    } else {
-        $imagenSala = $recurso['imagen_sala'];
+    try {
+        if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
+            $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
+            if (!move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala)) {
+                throw new Exception('Error al subir la imagen');
+            }
+        } else {
+            $imagenSala = $recurso['imagen_sala'];
+        }
+
+        $query = "UPDATE $tabla SET nombre_sala = ?, capacidad = ?, tipo_sala = ?, imagen_sala = ? WHERE $id_campo = ?";
+        $stmt = $conexion->prepare($query);
+        
+        if ($stmt->execute([$nombreSala, $capacidad, $tipoSala, $imagenSala, $id])) {
+            echo json_encode(['success' => true]);
+        } else {
+            throw new Exception('Error al actualizar la sala');
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
-
-    $query = "UPDATE $tabla SET nombre_sala = ?, capacidad = ?, tipo_sala = ?, imagen_sala = ? WHERE $id_campo = ?";
-    $stmt = $conexion->prepare($query);
-    $stmt->execute([$nombreSala, $capacidad, $tipoSala, $imagenSala, $id]);
-
-    header("Location: ../gestionar_salas.php?tipo=$tipo");
     exit();
 }
 
-// Obtener errores de la sesión
 $errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
-unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
+unset($_SESSION['errores']);
 
-// Obtener los tipos de sala existentes en la base de datos
 $queryTipos = "SELECT DISTINCT tipo_sala FROM tbl_salas";
 $stmtTipos = $conexion->query($queryTipos);
 $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
@@ -115,8 +115,9 @@ $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
     <link rel="stylesheet" href="../css/menu.css">
     <link rel="stylesheet" href="../css/estilos.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <title>Editar <?php echo ucfirst(substr($tipo, 0, -1)); ?></title>
+    <title>Editar</title>
     <script src="../js/validacion_EditarSala.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -143,7 +144,7 @@ $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
 
     <div class="container container-crud">
         <h2 class="mb-4">Editar <?php echo ucfirst(substr($tipo, 0, -1)); ?></h2>
-        <form method="POST" class="form-editar-sala border p-4 bg-light" enctype="multipart/form-data">
+        <form method="POST" id="formSala" class="form-editar-sala border p-4 bg-light" enctype="multipart/form-data">
             <?php if (!empty($errores)): ?>
                 <div class="alert alert-danger mb-3">
                     <?php foreach ($errores as $error): ?>
@@ -179,5 +180,10 @@ $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
             <button type="submit" class="btn btn-primary">Actualizar Sala</button>
         </form>
     </div>
+
+    <script>
+        const tipo = '<?php echo $tipo; ?>';
+    </script>
+    <script src="../js/sweetalert_editar_sala.js"></script>
 </body>
 </html>

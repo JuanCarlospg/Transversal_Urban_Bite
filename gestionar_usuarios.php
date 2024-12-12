@@ -2,13 +2,11 @@
 session_start();
 require_once('./php/conexion.php');
 
-// Verificar si el usuario tiene permisos de administrador
 if (!isset($_SESSION['usuario']) || $_SESSION['rol'] != 'Administrador') {
     header("Location: index.php?error=acceso_denegado");
     exit();
 }
 
-// Obtener todos los usuarios
 $query_usuarios = "SELECT u.id_usuario, u.nombre_user, r.nombre_rol FROM tbl_usuarios u JOIN tbl_roles r ON u.id_rol = r.id_rol";
 $stmt_usuarios = $conexion->query($query_usuarios);
 ?>
@@ -20,7 +18,10 @@ $stmt_usuarios = $conexion->query($query_usuarios);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/gestionar_usuarios.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/sweetalert_eliminar_usuario.js"></script>
     <title>Gestión de Usuarios</title>
+    
 </head>
 <body>
     <div class="container">
@@ -66,8 +67,7 @@ $stmt_usuarios = $conexion->query($query_usuarios);
                         <td><?php echo $usuario['nombre_rol']; ?></td>
                         <td>
                             <a href="./php/editar_usuario.php?id=<?php echo $usuario['id_usuario']; ?>" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="./php/eliminar_usuario.php?id=<?php echo $usuario['id_usuario']; ?>" class="btn btn-danger btn-sm">Eliminar</a>
-                        </td>
+                            <a href="javascript:void(0);" onclick="eliminarUsuario(<?php echo $usuario['id_usuario']; ?>)" class="btn btn-danger btn-sm">Eliminar</a>                        </td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>

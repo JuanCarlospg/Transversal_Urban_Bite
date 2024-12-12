@@ -242,6 +242,19 @@ section img:hover {
     color: #333;
 }
 
+.swal-custom {
+    color: #000 !important;
+}
+.swal-title {
+    color: #000 !important;
+}
+.swal-text {
+    color: #000 !important;
+}
+.swal2-popup {
+    color: #000 !important;
+}
+
 @media (min-width: 12px) {
     .navbar-title {
         font-size: 1.5em;

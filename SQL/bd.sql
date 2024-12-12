@@ -23,7 +23,8 @@ CREATE TABLE tbl_salas (
     id_sala INT PRIMARY KEY AUTO_INCREMENT,
     capacidad INT,
     nombre_sala VARCHAR(100),
-    tipo_sala VARCHAR(50)       
+    tipo_sala VARCHAR(50),
+    imagen_sala VARCHAR(255)
 );
 
 -- Tabla de mesas

@@ -35,35 +35,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($errores) > 0) {
-        $_SESSION['errores'] = $errores;
-        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id_usuario);
+        echo json_encode(['success' => false, 'message' => implode('<br>', $errores)]);
         exit();
     }
 
-    $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ?";
-    $params = [$nombre_user, $id_rol];
+    try {
+        $query = "UPDATE tbl_usuarios SET nombre_user = ?, id_rol = ?";
+        $params = [$nombre_user, $id_rol];
 
-    if (!empty($contrasena)) {
-        $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
-        $query .= ", contrasena = ?";
-        $params[] = $contrasena_hash;
+        if (!empty($contrasena)) {
+            $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
+            $query .= ", contrasena = ?";
+            $params[] = $contrasena_hash;
+        }
+
+        $query .= " WHERE id_usuario = ?";
+        $params[] = $id_usuario;
+
+        $stmt = $conexion->prepare($query);
+        $stmt->execute($params);
+
+        echo json_encode(['success' => true]);
+        exit();
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Error al actualizar el usuario']);
+        exit();
     }
-
-    $query .= " WHERE id_usuario = ?";
-    $params[] = $id_usuario;
-
-    $stmt = $conexion->prepare($query);
-    $stmt->execute($params);
-
-    header("Location: ../gestionar_usuarios.php");
-    exit();
 }
 
-// Obtener errores de la sesión
 $errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
-unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
+unset($_SESSION['errores']);
 
-// Obtener roles para el formulario
 $query_roles = "SELECT * FROM tbl_roles";
 $stmt_roles = $conexion->query($query_roles);
 $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
@@ -79,6 +81,7 @@ $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Editar Usuario</title>
     <script src="../js/validacion_EditUser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -105,7 +108,7 @@ $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="container container-crud">
         <h2 class="mb-4">Editar Usuario</h2>
-        <form method="POST" class="form-crear-usuario border p-4">
+        <form method="POST" id="formUsuario" class="form-crear-usuario border p-4">
             <?php if (!empty($errores)): ?>
                 <div class="alert alert-danger mb-3">
                     <?php foreach ($errores as $error): ?>
@@ -132,5 +135,7 @@ $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
             <button type="submit" class="btn btn-primary">Actualizar</button>
         </form>
     </div>
+
+    <script src="../js/sweetalert_editar_usuario.js"></script>
 </body>
 </html>

@@ -2,85 +2,82 @@
 session_start();
 require_once('./conexion.php');
 
-// Verificar permisos
-if (!isset($_SESSION['usuario']) || $_SESSION['rol'] != 'Administrador') {
-    header("Location: index.php?error=acceso_denegado");
+$id = $_GET['id'] ?? null;
+
+if (!$id) {
+    echo json_encode(['success' => false, 'message' => 'ID de mesa no proporcionado']);
     exit();
 }
 
-// Obtener ID de la mesa
-$id_mesa = $_GET['id'] ?? null;
-if (!$id_mesa) {
-    die("Error: ID de mesa no proporcionado.");
-}
-
-// Obtener datos de la mesa
-$query = "SELECT * FROM tbl_mesas WHERE id_mesa = ?";
+$query = "SELECT m.*, s.nombre_sala FROM tbl_mesas m 
+          JOIN tbl_salas s ON m.id_sala = s.id_sala 
+          WHERE m.id_mesa = ?";
 $stmt = $conexion->prepare($query);
-$stmt->execute([$id_mesa]);
+$stmt->execute([$id]);
 $mesa = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$mesa) {
-    die("Error: Mesa no encontrada.");
+    echo json_encode(['success' => false, 'message' => 'Mesa no encontrada']);
+    exit();
 }
 
-// Definir $idSala
-$idSala = $mesa['id_sala'];
-
-// Procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $numeroMesa = trim($_POST['numero_mesa']);
-    $idSala = $_POST['id_sala'];
-    $numeroSillas = $_POST['numero_sillas'];
-
+    $numero_mesa = $_POST['numero_mesa'] ?? '';
+    $numero_sillas = $_POST['numero_sillas'] ?? '';
+    $estado = $_POST['estado'] ?? $mesa['estado']; 
+    
     $errores = [];
 
-    if (empty($numeroMesa)) {
-        $errores[] = "El número de la mesa es obligatorio.";
-    } else if (!is_numeric($numeroMesa) || $numeroMesa <= 0) {
-        $errores[] = "El número de la mesa debe ser un número positivo.";
+    if (empty($numero_mesa)) {
+        $errores[] = "El número de mesa es obligatorio.";
+    } elseif (!is_numeric($numero_mesa) || $numero_mesa <= 0) {
+        $errores[] = "El número de mesa debe ser un número positivo.";
     } else {
-        // Verificar si el número de la mesa ya existe en otra mesa
-        $query_check_numero = "SELECT COUNT(*) FROM tbl_mesas WHERE numero_mesa = ? AND id_mesa != ?";
-        $stmt_check_numero = $conexion->prepare($query_check_numero);
-        $stmt_check_numero->execute([$numeroMesa, $id_mesa]);
-        $numero_existe = $stmt_check_numero->fetchColumn();
+        $query_check_mesa = "SELECT COUNT(*) FROM tbl_mesas WHERE numero_mesa = ? AND id_sala = ? AND id_mesa != ?";
+        $stmt_check_mesa = $conexion->prepare($query_check_mesa);
+        $stmt_check_mesa->execute([$numero_mesa, $mesa['id_sala'], $id]);
+        $mesa_existe = $stmt_check_mesa->fetchColumn();
 
-        if ($numero_existe > 0) {
-            $errores[] = "El número de la mesa ya está en uso. Por favor, elige otro.";
+        if ($mesa_existe > 0) {
+            $errores[] = "El número de mesa ya está en uso en esta sala.";
         }
     }
 
-    if (empty($idSala)) {
-        $errores[] = "La sala es obligatoria.";
-    }
-
-    if (empty($numeroSillas)) {
+    if (empty($numero_sillas)) {
         $errores[] = "El número de sillas es obligatorio.";
-    } else if (!is_numeric($numeroSillas) || $numeroSillas <= 0) {
+    } elseif (!is_numeric($numero_sillas) || $numero_sillas <= 0) {
         $errores[] = "El número de sillas debe ser un número positivo.";
     }
 
     if (count($errores) > 0) {
-        $_SESSION['errores'] = $errores;
-        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id_mesa);
+        echo json_encode(['success' => false, 'message' => implode('<br>', $errores)]);
         exit();
     }
 
-    $query = "UPDATE tbl_mesas SET numero_mesa = ?, id_sala = ?, numero_sillas = ? WHERE id_mesa = ?";
-    $stmt = $conexion->prepare($query);
-    $stmt->execute([$numeroMesa, $idSala, $numeroSillas, $id_mesa]);
-
-    // Redireccionar a añadir_mesa.php con el ID de sala
-    header("Location: ./añadir_mesa.php?id_sala=" . $idSala);
+    try {
+        $query = "UPDATE tbl_mesas SET numero_mesa = ?, numero_sillas = ?, estado = ? WHERE id_mesa = ?";
+        $stmt = $conexion->prepare($query);
+        
+        if ($stmt->execute([$numero_mesa, $numero_sillas, $estado, $id])) {
+            echo json_encode([
+                'success' => true,
+                'id_sala' => $mesa['id_sala']
+            ]);
+        } else {
+            throw new Exception('Error al actualizar la mesa');
+        }
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error al actualizar la mesa: ' . $e->getMessage()
+        ]);
+    }
     exit();
 }
 
-// Obtener errores de la sesión
 $errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
-unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
+unset($_SESSION['errores']);
 
-// Obtener las salas existentes en la base de datos
 $querySalas = "SELECT id_sala, nombre_sala FROM tbl_salas";
 $stmtSalas = $conexion->query($querySalas);
 $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
@@ -96,6 +93,7 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Editar Mesa</title>
     <script src="../js/validacion_EditarMesa.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -111,7 +109,7 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
                                 } ?></h3>
             </div>
             <div class="navbar-right" style="margin-right: 18px;">
-                <a href="./añadir_mesa.php?id_sala=<?php echo $idSala; ?>" class="navbar-icon">
+                <a href="./añadir_mesa.php?id_sala=<?php echo $mesa['id_sala']; ?>" class="navbar-icon">
                     <img src="../img/atras.png" alt="Atras">
                 </a>
             </div>
@@ -123,8 +121,9 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <div class="container container-crud">
-        <h2 class="mb-4">Editar Mesa</h2>
-        <form method="POST" class="form-editar-mesa border p-4 bg-light">
+        <h2 class="mb-4">Editar Mesa de la Sala "<?php echo htmlspecialchars($mesa['nombre_sala']); ?>"</h2>
+        
+        <form method="POST" id="formEditarMesa" class="mb-4 p-4 border rounded bg-light">
             <?php if (!empty($errores)): ?>
                 <div class="alert alert-danger mb-3">
                     <?php foreach ($errores as $error): ?>
@@ -155,5 +154,7 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
             <button type="submit" class="btn btn-primary">Actualizar Mesa</button>
         </form>
     </div>
+    
+    <script src="../js/sweetalert_editar_mesa.js"></script>
 </body>
 </html>

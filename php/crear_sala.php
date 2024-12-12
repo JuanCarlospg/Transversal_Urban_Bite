@@ -2,18 +2,15 @@
 session_start();
 require_once('./conexion.php');
 
-// Verificar permisos
 if (!isset($_SESSION['usuario']) || $_SESSION['rol'] != 'Administrador') {
     header("Location: index.php?error=acceso_denegado");
     exit();
 }
 
-// Obtener los tipos de sala existentes en la base de datos
 $queryTipos = "SELECT DISTINCT tipo_sala FROM tbl_salas";
 $stmtTipos = $conexion->query($queryTipos);
 $tiposSala = $stmtTipos->fetchAll(PDO::FETCH_COLUMN);
 
-// Procesar creación de sala
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombreSala = trim($_POST['nombre_sala']);
     $capacidad = $_POST['capacidad'];
@@ -24,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombreSala)) {
         $errores[] = "El nombre de la sala es obligatorio.";
     } else {
-        // Verificar si el nombre de la sala ya existe
         $query_check_nombre = "SELECT COUNT(*) FROM tbl_salas WHERE nombre_sala = ?";
         $stmt_check_nombre = $conexion->prepare($query_check_nombre);
         $stmt_check_nombre->execute([$nombreSala]);
@@ -46,32 +42,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($errores) > 0) {
-        $_SESSION['errores'] = $errores;
-        header("Location: " . $_SERVER['PHP_SELF']);
+        echo json_encode(['success' => false, 'message' => implode('<br>', $errores)]);
         exit();
     }
 
-    // Manejo de la imagen
-    $imagenSala = null;
-    if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
-        $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
-        move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala);
-    }
+    try {
+        $imagenSala = null;
+        if (isset($_FILES['imagen_sala']) && $_FILES['imagen_sala']['error'] == UPLOAD_ERR_OK) {
+            $imagenSala = 'img/' . basename($_FILES['imagen_sala']['name']);
+            if (!move_uploaded_file($_FILES['imagen_sala']['tmp_name'], '../' . $imagenSala)) {
+                throw new Exception('Error al subir la imagen');
+            }
+        }
 
-    $query = "INSERT INTO tbl_salas (nombre_sala, capacidad, tipo_sala, imagen_sala) VALUES (?, ?, ?, ?)";
-    $stmt = $conexion->prepare($query);
-    
-    if ($stmt->execute([$nombreSala, $capacidad, $tipoSala, $imagenSala])) {
-        header("Location: ../gestionar_salas.php?tipo=salas&mensaje=creado");
-        exit();
-    } else {
-        $error = "Error al crear la sala.";
+        $query = "INSERT INTO tbl_salas (nombre_sala, capacidad, tipo_sala, imagen_sala) VALUES (?, ?, ?, ?)";
+        $stmt = $conexion->prepare($query);
+        
+        if ($stmt->execute([$nombreSala, $capacidad, $tipoSala, $imagenSala])) {
+            echo json_encode(['success' => true]);
+        } else {
+            throw new Exception('Error al crear la sala');
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
+    exit();
 }
-
-// Obtener errores de la sesión
-$errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
-unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
 ?>
 
 <!DOCTYPE html>
@@ -84,6 +80,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Crear Nueva Sala</title>
     <script src="../js/validacion_CrearSala.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -110,14 +107,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
 
     <div class="container container-crud">
         <h2 class="mb-4">Crear Nueva Sala</h2>
-        <form method="POST" class="form-crear-sala border p-4 bg-light" enctype="multipart/form-data">
-            <?php if (!empty($errores)): ?>
-                <div class="alert alert-danger mb-3">
-                    <?php foreach ($errores as $error): ?>
-                        <p><?php echo htmlspecialchars($error); ?></p>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+        <form method="POST" id="formSala" class="form-crear-sala border p-4 bg-light" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="nombre_sala">Nombre de la Sala:</label>
                 <input type="text" id="nombre_sala" name="nombre_sala" class="form-control">
@@ -146,5 +136,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
             <button type="submit" class="btn btn-primary">Crear Sala</button>
         </form>
     </div>
+
+    <script src="../js/sweetalert_crear_sala.js"></script>
 </body>
 </html>

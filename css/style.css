@@ -83,6 +83,19 @@ h2 {
     cursor: pointer;
 }
 
+.swal-custom {
+    color: #000 !important;
+}
+.swal-title {
+    color: #000 !important;
+}
+.swal-text {
+    color: #000 !important;
+}
+.swal2-popup {
+    color: #000 !important;
+}
+
 /* Responsive Styles */
 @media (min-width: 768px) {
     .container {

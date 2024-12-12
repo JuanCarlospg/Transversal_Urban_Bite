@@ -2,16 +2,13 @@
 session_start();
 require_once('./php/conexion.php');
 
-// Verificar permisos
 if (!isset($_SESSION['usuario']) || $_SESSION['rol'] != 'Administrador') {
     header("Location: index.php?error=acceso_denegado");
     exit();
 }
 
-// Determinar el tipo de recurso
-$tipo = $_GET['tipo'] ?? 'salas'; // Por defecto, gestionar salas
+$tipo = $_GET['tipo'] ?? 'salas';
 
-// Configuración para cada recurso
 $recursos = [
     'salas' => [
         'tabla' => 'tbl_salas',
@@ -24,33 +21,29 @@ $recursos = [
         'etiquetas' => ['ID', 'Número', 'Sala', 'Sillas', 'Estado']
     ],
     'sillas' => [
-        'tabla' => 'tbl_sillas', // Crea esta tabla si no existe
+        'tabla' => 'tbl_sillas',
         'campos' => ['id_silla', 'numero_silla', 'id_mesa', 'material'],
         'etiquetas' => ['ID', 'Número', 'Mesa', 'Material']
     ],
 ];
 
-// Verificar recurso válido
 if (!array_key_exists($tipo, $recursos)) {
     die("Recurso no válido.");
 }
 
-// Obtener configuración del recurso
 $config = $recursos[$tipo];
 $tabla = $config['tabla'];
 $campos = $config['campos'];
 $etiquetas = $config['etiquetas'];
 
-// Procesar creación de recurso
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear'])) {
-    $valores = array_map(fn($campo) => $_POST[$campo], array_slice($campos, 1)); // Excluir ID al insertar
+    $valores = array_map(fn($campo) => $_POST[$campo], array_slice($campos, 1)); 
     $placeholders = implode(', ', array_fill(0, count($valores), '?'));
     $query = "INSERT INTO $tabla (" . implode(', ', array_slice($campos, 1)) . ") VALUES ($placeholders)";
     $stmt = $conexion->prepare($query);
     $stmt->execute($valores);
 }
 
-// Leer datos
 $query = "SELECT * FROM $tabla";
 $result = $conexion->query($query);
 ?>
@@ -63,6 +56,8 @@ $result = $conexion->query($query);
     <link rel="stylesheet" href="./css/gestionar_usuarios.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <title>Gestión de <?php echo ucfirst($tipo); ?></title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/sweetalert_eliminar_sala.js"></script>
 </head>
 <body>
     <div class="container">
@@ -108,7 +103,7 @@ $result = $conexion->query($query);
                         <?php endforeach; ?>
                         <td>
                             <a href="./php/editar_sala.php?tipo=<?php echo $tipo; ?>&id=<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="./php/eliminar_sala.php?tipo=<?php echo $tipo; ?>&id=<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>" class="btn btn-danger btn-sm">Eliminar</a>
+                            <a href="javascript:void(0);" onclick="eliminarSala(<?php echo $row['id_' . substr($tipo, 0, -1)]; ?>, '<?php echo $tipo; ?>')" class="btn btn-danger btn-sm">Eliminar</a>
                             <?php if ($tipo === 'salas'): ?>
                                 <a href="./php/añadir_mesa.php?id_sala=<?php echo $row['id_sala']; ?>" class="btn btn-success btn-sm">Añadir Mesas</a>
                             <?php endif; ?>

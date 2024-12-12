@@ -19,20 +19,20 @@ h2 {
     border-radius: 0.25rem;
 }
 .form-crear-sala {
-    border-radius: 10px; /* Bordes redondeados para el formulario */
-    background-color: rgba(255, 255, 255, 0.8); /* Fondo blanco con opacidad */
-    padding: 20px; /* Espaciado interno */
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.8); 
+    padding: 20px; 
 }
 
 .form-control {
-    border-radius: 5px; /* Bordes redondeados para los campos de entrada */
+    border-radius: 5px; 
 }
 
 .btn {
-    border-radius: 5px; /* Bordes redondeados para el botón */
+    border-radius: 5px; 
 }
 .mensaje {
-    color: white; /* Cambia el color del texto a blanco */
+    color: white;
     padding: 10px;
     border-radius: 5px;
     margin-bottom: 20px;
@@ -40,4 +40,17 @@ h2 {
 
 .form-label {
     color: white;
+}
+
+.swal-custom {
+    color: #000 !important;
+}
+.swal-title {
+    color: #000 !important;
+}
+.swal-text {
+    color: #000 !important;
+}
+.swal2-popup {
+    color: #000 !important;
 }

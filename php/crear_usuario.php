@@ -7,7 +7,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contrasena = $_POST['contrasena'];
     $id_rol = $_POST['id_rol'];
 
-    // Validaciones en PHP
     $errores = [];
     if (empty($nombre_user) || empty($contrasena) || empty($id_rol)) {
         $errores[] = "Todos los campos son obligatorios.";
@@ -19,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errores[] = "La contraseña debe tener al menos 6 caracteres.";
     }
 
-    // Verificar si el nombre de usuario ya existe
     $query_check_user = "SELECT COUNT(*) FROM tbl_usuarios WHERE nombre_user = ?";
     $stmt_check_user = $conexion->prepare($query_check_user);
     $stmt_check_user->execute([$nombre_user]);
@@ -30,29 +28,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($errores) > 0) {
-        // Guardar los errores en la sesión para mostrarlos en el formulario
-        $_SESSION['errores'] = $errores;
-        header("Location: " . $_SERVER['PHP_SELF']);
+        echo json_encode(['success' => false, 'message' => implode('<br>', $errores)]);
         exit();
     }
 
-    $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
-    $query = "INSERT INTO tbl_usuarios (nombre_user, contrasena, id_rol) VALUES (?, ?, ?)";
-    $stmt = $conexion->prepare($query);
-    $stmt->execute([$nombre_user, $contrasena_hash, $id_rol]);
-
-    header("Location: ../gestionar_usuarios.php");
+    try {
+        $contrasena_hash = password_hash($contrasena, PASSWORD_BCRYPT);
+        
+        $query = "INSERT INTO tbl_usuarios (nombre_user, contrasena, id_rol) VALUES (?, ?, ?)";
+        $stmt = $conexion->prepare($query);
+        
+        if ($stmt->execute([$nombre_user, $contrasena_hash, $id_rol])) {
+            echo json_encode(['success' => true]);
+        } else {
+            throw new Exception('Error al crear el usuario');
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Error al crear el usuario: ' . $e->getMessage()]);
+    }
     exit();
 }
 
-// Obtener roles para el formulario
 $query_roles = "SELECT * FROM tbl_roles";
 $stmt_roles = $conexion->query($query_roles);
 $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener errores de la sesión
 $errores = isset($_SESSION['errores']) ? $_SESSION['errores'] : [];
-unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
+unset($_SESSION['errores']);
 ?>
 
 <!DOCTYPE html>
@@ -65,6 +67,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Crear Usuario</title>
     <script src="../js/validaciones.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="container">
@@ -91,7 +94,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
 
     <div class="container container-crud">
         <h2 class="mb-4">Crear Usuario</h2>
-        <form method="POST" class="form-crear-usuario border p-4">
+        <form method="POST" id="formUsuario" class="form-crear-usuario border p-4">
             <?php if (!empty($errores)): ?>
                 <div class="alert alert-danger mb-3">
                     <?php foreach ($errores as $error): ?>
@@ -119,5 +122,7 @@ unset($_SESSION['errores']); // Limpiar errores después de mostrarlos
             <button type="submit" class="btn btn-primary">Crear</button>
         </form>
     </div>
+
+    <script src="../js/sweetalert_crear_usuario.js"></script>
 </body>
 </html>
