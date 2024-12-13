@@ -168,7 +168,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Reservar</button>
-            <a href="reservar_mesa.php?id_mesa=<?php echo $id_mesa; ?>" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 

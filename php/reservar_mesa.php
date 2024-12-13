@@ -141,8 +141,8 @@ $reservas = $stmt_reservas->fetchAll(PDO::FETCH_ASSOC);
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>ID Reserva</th>
-                    <th>Nombre</th>
+                    <th>ID</th>
+                    <th>Nombre Reserva</th>
                     <th>Fecha</th>
                     <th>Hora de Inicio</th>
                     <th>Hora de Fin</th>

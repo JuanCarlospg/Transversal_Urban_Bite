@@ -48,8 +48,9 @@ $stmt_usuarios = $conexion->query($query_usuarios);
     </div>
 
     <div class="container container-crud">
-        <h2 class="mb-4">Gestión de Usuarios</h2>
+        <h1 class="mb-4">Gestión de Usuarios</h1>
         <a href="./php/crear_usuario.php" class="btn btn-primary mb-3">Crear Nuevo Usuario</a>
+        <h2 class="mb-4">Listado de Usuarios</h2>
         <table class="table table-striped">
             <thead>
                 <tr>

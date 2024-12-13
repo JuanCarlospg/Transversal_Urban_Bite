@@ -191,8 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span class="error-message" style="color: red;"><?php echo $errores['franja']; ?></span>
                 <?php endif; ?>
             </div>
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            <a href="reservar_mesa.php?id_mesa=<?php echo $reserva['id_mesa']; ?>" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Actualizar</button>
         </form>
     </div>
 

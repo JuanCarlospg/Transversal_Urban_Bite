@@ -121,7 +121,7 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <div class="container container-crud">
-        <h2 class="mb-4">Editar Mesa de la Sala "<?php echo htmlspecialchars($mesa['nombre_sala']); ?>"</h2>
+        <h2 class="mb-4">Editar Mesa</h2>
         
         <form method="POST" id="formEditarMesa" class="mb-4 p-4 border rounded bg-light">
             <?php if (!empty($errores)): ?>
@@ -134,16 +134,6 @@ $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
             <div class="form-group">
                 <label for="numero_mesa">Número de la Mesa:</label>
                 <input type="text" id="numero_mesa" name="numero_mesa" value="<?php echo htmlspecialchars($mesa['numero_mesa']); ?>" class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label for="id_sala">Sala:</label>
-                <select id="id_sala" name="id_sala" class="form-control">
-                    <option value="" disabled>Seleccione una sala</option>
-                    <?php foreach ($salas as $sala): ?>
-                        <option value="<?php echo htmlspecialchars($sala['id_sala']); ?>" <?php echo ($sala['id_sala'] == $mesa['id_sala']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($sala['nombre_sala']); ?></option>
-                    <?php endforeach; ?>
-                </select>
             </div>
 
             <div class="form-group">
