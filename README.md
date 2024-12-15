@@ -27,16 +27,14 @@ A partir del Proyecto 01 realizado con el grupo, se solicita añadir las siguien
 ### Instalación:
 1. **Clonación del repositorio:**
    ```bash
-   git clone <URL_del_repositorio>
+   git clone https://github.com/JuanCarlospg/Transversal_Urban_Bite.git
    ```
 
 2. **Configuración de la base de datos:**
-   - Importa el archivo `database.sql` situado en la raíz del proyecto para configurar las tablas necesarias.
-   - Edita el archivo `config.php` con las credenciales de tu base de datos.
+   - Importa el archivo `bd.sql` situado en la raíz del proyecto para configurar las tablas necesarias.
 
 3. **Despliegue local:**
    - Ejecuta un servidor local con soporte PHP, como XAMPP o Laragon.
-   - Coloca los archivos del proyecto en la carpeta `htdocs` o equivalente.
 
 4. **Acceso:**
    - Abre el navegador en: `http://localhost/<nombre_del_proyecto>`
@@ -44,20 +42,12 @@ A partir del Proyecto 01 realizado con el grupo, se solicita añadir las siguien
 ### Usuarios para Pruebas:
 
 #### Administrador:
-- **Usuario:** admin
-- **Contraseña:** admin123
+- **Usuario:** Admin
+- **Contraseña:** asdASD123
 
 #### Camarero:
-- **Usuario:** camarero1
-- **Contraseña:** camarero123
-
-#### Gerente:
-- **Usuario:** gerente1
-- **Contraseña:** gerente123
-
-#### Personal de mantenimiento:
-- **Usuario:** mantenimiento1
-- **Contraseña:** mantenimiento123
+- **Usuario:** Olga
+- **Contraseña:** asdASD123
 
 ---
 
@@ -74,43 +64,6 @@ A partir del Proyecto 01 realizado con el grupo, se solicita añadir las siguien
 
 4. **Control de versiones:**
    - Git (local y GitHub)
-
----
-
-## Estructura del Proyecto
-
-- `/` - Raíz del proyecto
-  - `index.php` - Página principal
-  - `admin/` - Páginas y funcionalidades de administración
-  - `reservas/` - Páginas para gestionar las reservas
-  - `assets/` - Archivos estáticos (CSS, JS, imágenes)
-  - `config.php` - Configuración de la base de datos
-  - `database.sql` - Script para crear las tablas de la base de datos
-
----
-
-## Bases de Datos
-
-### Tablas Principales:
-
-#### 1. `usuarios`
-- `id_usuario` (INT, PK, AI)
-- `nombre_usuario` (VARCHAR)
-- `rol_usuario` (ENUM: 'camarero', 'gerente', 'mantenimiento')
-- `contraseña` (VARCHAR)
-
-#### 2. `recursos`
-- `id_recurso` (INT, PK, AI)
-- `tipo_recurso` (ENUM: 'sala', 'mesa', 'silla')
-- `nombre_recurso` (VARCHAR)
-- `imagen` (VARCHAR)
-
-#### 3. `reservas`
-- `id_reserva` (INT, PK, AI)
-- `id_usuario` (INT, FK)
-- `id_recurso` (INT, FK)
-- `fecha` (DATE)
-- `franja_horaria` (VARCHAR)
 
 ---
 
